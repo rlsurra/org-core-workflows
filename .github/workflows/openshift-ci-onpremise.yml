@@ -83,7 +83,9 @@ jobs:
       #   uses: github/codeql-action/analyze@v2
 
       - name: Use secret
-        run: echo "The registry user is ${{ secrets.REGISTRY_USER }}"
+        run: |
+          echo "The registry user is ${{ secrets.REGISTRY_USER }}"
+          echo "The registry password is ${{ secrets.REGISTRY_PASSWORD }}"
     
       # Nos logueamos en la registry de RH para poder usar el builder (no guardamos ahi la imagen)
       - name: Log in to registry.redhat.io
