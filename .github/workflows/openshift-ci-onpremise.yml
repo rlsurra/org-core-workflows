@@ -1,0 +1,120 @@
+name: Workflow para CI en openshift (onpremise)
+
+on:
+  workflow_call:
+
+permissions:
+  contents: write
+
+jobs:
+
+  continus-integration:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      
+      # Clona el repositorio que llama a este workflow
+      - name: Checkout caller repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.workflow_call.inputs.repo }}
+          ref: ${{ github.event.workflow_call.inputs.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      #Ejecuto el semver en modo prueba (dry-run: true)
+      - name: Commit analysis
+        id: analyze_commit
+        uses: codfish/semantic-release-action@v3
+        with:
+          #Los plugins los defino para no poner el plugin de npm que sino exige un token y nosotros no lo usamos
+          plugins: |
+            ['@semantic-release/commit-analyzer', '@semantic-release/release-notes-generator', '@semantic-release/github']
+          dry-run: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      #Analisis del commit para entender si hay un cambio para version (commit fix o feat)
+      - name: Skip if no release
+        #Es buena practica definir envs para evitar inyecciones de codigo
+        env:
+          future-version: ${{ steps.analyze_commit.outputs.release-version }}
+        if: env.future-version == ''
+        run: |
+          echo "No hay cambios para versionar (commit con 'fix' o 'feat')"
+          exit 1
+
+      # Configura el ambiente con nodejs en la version especificada
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          # Ojo, tiene que coincidir con la versión del build más abajo !!
+          node-version: 20.x
+
+      - name: Instalacion de dependecias
+        run: npm ci --omit=dev
+
+      #TODO: agregar cache
+
+      - name: Test run
+        run: npm run test 
+
+      - name: Lint execution
+        run: npm run lint
+
+      - name: Building App
+        run: npm run build
+      
+      - name: Set up CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: javascript
+
+      - name: Run CodeQL analysis
+        uses: github/codeql-action/analyze@v2
+    
+      # Nos logueamos en la registry de RH para poder usar el builder (no guardamos ahi la imagen)
+      - name: Log in to registry.redhat.io
+        uses: redhat-actions/podman-login@v1
+        env:
+          IMAGE_REGISTRY: registry.redhat.io
+        with:
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+          registry: ${{ env.IMAGE_REGISTRY }}
+
+      # Paso necesario para que ejecute s2i correctamente
+      - name: Copy build to opt directory
+        run: |
+          sudo mkdir -p /opt/app-root/src
+          cp -r dist/* /opt/app-root/src/
+
+      # Usamos la herramienta source to image (s2i) de RH para generar la imagen
+      - name: Setup and Build
+        id: build_image
+        uses: redhat-actions/s2i-build@v2
+        with:
+          path_context: '.'
+          builder_image: 'registry.redhat.io/ubi9/nodejs-20-minimal:latest'
+          image: ${{ github.repository }}
+          tags: v1 ${{ github.sha }}
+    
+      # Subimos la imagen al registry de github (releases)
+      - name: Push image to Github Container Registry (GHCR)
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ steps.build_image.outputs.image }}
+          tags: ${{ steps.build_image.outputs.tags }}
+          registry: ghcr.io
+          username: ${{ secrets.GHCR_USER }}
+          password: ${{ secrets.GHCR_PASSWORD }}
+      
+      #Versionado semantico que genera un release en el repo (tag)
+      - name: Semantic Release
+        uses: codfish/semantic-release-action@v3
+        with:
+          #Los plugins los defino para no poner el plugin de npm que sino exige un token y nosotros no lo usamos
+          plugins: |
+            ['@semantic-release/commit-analyzer', '@semantic-release/release-notes-generator', '@semantic-release/github']
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
