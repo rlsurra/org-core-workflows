@@ -101,7 +101,9 @@ jobs:
           path_context: '.'
           builder_image: 'registry.redhat.io/ubi9/nodejs-20-minimal:latest'
           image: ${{ github.repository }}
-          tags: v1 ${{ github.sha }}
+          #El v2 lo pongo para que no colisione entre entreprise y el publico
+          #TODO: matchear semver con tag de la imagen
+          tags: v2 ${{ github.sha }}
     
       # Subimos la imagen al registry de github (releases)
       - name: Push image to Github Container Registry (GHCR)
