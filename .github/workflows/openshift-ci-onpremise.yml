@@ -107,6 +107,9 @@ jobs:
         run: |
           echo "Image: ${{ steps.build_image.outputs.image }}"
           echo "Tags: ${{ steps.build_image.outputs.tags }}"
+
+      - name: List Images
+        run: docker images || podman images
         
       # Subimos la imagen al registry de github (releases)
       - name: Push image to Github Container Registry (GHCR)
