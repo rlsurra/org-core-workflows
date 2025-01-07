@@ -11,9 +11,9 @@ jobs:
 
   continus-integration:
 
-    env:
-      REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
-      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+    # env:
+    #   REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
+    #   REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
 
     runs-on: ubuntu-latest
 
@@ -87,7 +87,6 @@ jobs:
       - name: Use secret
         run: |
           echo "The registry user is ${{ secrets.REGISTRY_USER }}"
-          echo "The registry user FROM ENV is ${{ env.REGISTRY_USER }}"
           echo "The registry password is ${{ secrets.REGISTRY_PASSWORD }}"
           echo "Ah, pero github token es: ${{ secrets.GITHUB_TOKEN }}"
     
@@ -95,8 +94,8 @@ jobs:
       - name: Log in to registry.redhat.io
         uses: redhat-actions/podman-login@v1
         with:
-          username: potato
-          password: ${{ env.REGISTRY_PASSWORD }}
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
           registry: registry.redhat.io
 
       # Paso necesario para que ejecute s2i correctamente
