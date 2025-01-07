@@ -13,6 +13,8 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    environment: poc
+
     steps:
 
       #Este step se define mientras usemos un github publico
@@ -81,12 +83,10 @@ jobs:
       # Nos logueamos en la registry de RH para poder usar el builder (no guardamos ahi la imagen)
       - name: Log in to registry.redhat.io
         uses: redhat-actions/podman-login@v1
-        env:
-          IMAGE_REGISTRY: registry.redhat.io
         with:
           username: ${{ secrets.REGISTRY_USER }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
-          registry: ${{ env.IMAGE_REGISTRY }}
+          registry: registry.redhat.io
 
       # Paso necesario para que ejecute s2i correctamente
       - name: Copy build to opt directory
