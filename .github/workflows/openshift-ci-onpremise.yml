@@ -7,6 +7,10 @@ permissions:
   contents: write
   security-events: write
 
+env:
+  REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
+  REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+
 jobs:
 
   continus-integration:
@@ -83,7 +87,7 @@ jobs:
         uses: redhat-actions/podman-login@v1
         with:
           username: potato
-          password: ${{ secrets.REGISTRY_PASSWORD }}
+          password: ${{ env.REGISTRY_PASSWORD }}
           registry: registry.redhat.io
 
       # Paso necesario para que ejecute s2i correctamente
