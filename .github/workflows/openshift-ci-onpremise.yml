@@ -13,14 +13,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
+      #Este step se define mientras usemos un github publico
+      - name: Verify repository owner
+        run: |
+          if [[ "${{ github.repository_owner }}" != "mi-organizacion" ]]; then
+            echo "Unauthorized repository owner: ${{ github.repository_owner }}"
+            exit 1
+          fi
       
       # Clona el repositorio que llama a este workflow
       - name: Checkout caller repository
         uses: actions/checkout@v4
-        with:
-          repository: ${{ github.event.workflow_call.inputs.repo }}
-          ref: ${{ github.event.workflow_call.inputs.ref }}
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       #Ejecuto el semver en modo prueba (dry-run: true)
       - name: Commit analysis
