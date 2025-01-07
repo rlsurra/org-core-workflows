@@ -74,13 +74,16 @@ jobs:
       - name: Building App
         run: npm run build
       
-      - name: Set up CodeQL
-        uses: github/codeql-action/init@v2
-        with:
-          languages: javascript
+      # - name: Set up CodeQL
+      #   uses: github/codeql-action/init@v2
+      #   with:
+      #     languages: javascript
 
       # - name: Run CodeQL analysis
       #   uses: github/codeql-action/analyze@v2
+
+      - name: Use secret
+        run: echo "The registry user is ${{ secrets.REGISTRY_USER }}"
     
       # Nos logueamos en la registry de RH para poder usar el builder (no guardamos ahi la imagen)
       - name: Log in to registry.redhat.io
