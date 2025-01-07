@@ -7,13 +7,13 @@ permissions:
   contents: write
   security-events: write
 
-env:
-  REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
-  REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
-
 jobs:
 
   continus-integration:
+
+    env:
+      REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
 
     runs-on: ubuntu-latest
 
@@ -85,6 +85,7 @@ jobs:
       - name: Use secret
         run: |
           echo "The registry user is ${{ secrets.REGISTRY_USER }}"
+          echo "The registry user FROM ENV is ${{ env.REGISTRY_USER }}"
           echo "The registry password is ${{ secrets.REGISTRY_PASSWORD }}"
     
       # Nos logueamos en la registry de RH para poder usar el builder (no guardamos ahi la imagen)
